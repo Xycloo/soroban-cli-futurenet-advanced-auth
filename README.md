@@ -126,7 +126,7 @@ mod test;
 
 A successful test looks like this:
 
-```test
+```rust
 use crate::{ExampleContract, ExampleContractClient};
 use soroban_auth::Signature;
 use soroban_sdk::{
