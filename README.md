@@ -77,7 +77,7 @@ Ed25519(Ed25519Signature { public_key: BytesN<32>(61, 182, 193, 33, 244, 174, 11
 We can now use this signature in a contract that needs to verify `verify(&e, &sig, symbol!("change"), ());`. So a contract that needs to verify that the user has a signature for the `"change"` action. Again, this is an insecure signature, to make it secure you simply need to add a couple of params when using the `verify` fn, for example, to make it secure we could use something like `verify(&e, &sig, symbol!("change"), (key, value, nonce));`, where the nonce is relative to a user and is stored in the contract's data.
 
 # Writing the contract
-Let's write a very simple contract that verifies a certain signature (note that instead of `Signature` we have `Ed25519Signature` as argument since the CLI currently seems to panic (let me know if I'm doing something wrong here!) if we pass the complete `Signature` SCObject. That is why we build the signature directly inside the contract, which however is an anti-pattern and excludes the `Invoker` signature):
+Let's write a very simple contract that verifies a certain signature (note that instead of `Signature` we have `Ed25519Signature` as argument since the CLI currently seems to panic (let me know if I'm doing something wrong here! **Edit: I was doing something wrong here, the CLI indeed allows to pass full signatures, will update this ASAP**) if we pass the complete `Signature` SCObject. That is why we build the signature directly inside the contract, which however is an anti-pattern and excludes the `Invoker` signature):
 
 ```rust
 #![no_std]
