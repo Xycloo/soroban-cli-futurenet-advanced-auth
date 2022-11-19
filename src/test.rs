@@ -44,10 +44,5 @@ fn test_use_advanced_auth() {
 
     //    std::println!("{:?}", sig);
 
-    let sig_obj = match sig {
-        Signature::Ed25519(obj) => obj,
-        _ => panic!("not ed25519"),
-    };
-
-    client.test_sig(&sig_obj, &bytes!(&e, 0x7), &bytes!(&e, 0x7));
+    client.test_sig(&sig, &bytes!(&e, 0x7), &bytes!(&e, 0x7));
 }

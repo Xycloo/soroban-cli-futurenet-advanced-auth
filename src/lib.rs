@@ -11,8 +11,7 @@ pub enum DataKey {
 
 #[contractimpl]
 impl ExampleContract {
-    pub fn test_sig(e: Env, ed_sig: Ed25519Signature, key: Bytes, val: Bytes) {
-        let sig = Signature::Ed25519(ed_sig);
+    pub fn test_sig(e: Env, sig: Signature, key: Bytes, val: Bytes) {
         let nonce = get_nonce(&e, sig.identifier(&e));
         verify(&e, &sig, symbol!("change"), (key, val, nonce.clone()));
         e.data().set(DataKey::Nonce(sig.identifier(&e)), nonce + 1)

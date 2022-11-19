@@ -77,7 +77,7 @@ Ed25519(Ed25519Signature { public_key: BytesN<32>(61, 182, 193, 33, 244, 174, 11
 We can now use this signature in a contract that needs to verify `verify(&e, &sig, symbol!("change"), ());`. So a contract that needs to verify that the user has a signature for the `"change"` action. Again, this is an insecure signature, to make it secure you simply need to add a couple of params when using the `verify` fn, for example, to make it secure we could use something like `verify(&e, &sig, symbol!("change"), (key, value, nonce));`, where the nonce is relative to a user and is stored in the contract's data.
 
 # Writing the contract
-Let's write a very simple contract that verifies a certain signature (note that instead of `Signature` we have `Ed25519Signature` as argument since the CLI currently seems to panic (let me know if I'm doing something wrong here! **Edit: I was doing something wrong here, the CLI indeed allows to pass full signatures, will update this ASAP**) if we pass the complete `Signature` SCObject. That is why we build the signature directly inside the contract, which however is an anti-pattern and excludes the `Invoker` signature):
+Let's write a very simple contract that verifies a certain signature (note that we have a `Signature` argument:
 
 ```rust
 #![no_std]
@@ -93,8 +93,7 @@ pub enum DataKey {
 
 #[contractimpl]
 impl ExampleContract {
-    pub fn test_sig(e: Env, ed_sig: Ed25519Signature, key: Bytes, val: Bytes) {
-        let sig = Signature::Ed25519(ed_sig);
+	pub fn test_sig(e: Env, sig: Signature, key: Bytes, val: Bytes) {
         let nonce = get_nonce(&e, sig.identifier(&e));
         verify(&e, &sig, symbol!("change"), (key, val, nonce.clone()));
         e.data().set(DataKey::Nonce(sig.identifier(&e)), nonce + 1)
@@ -173,12 +172,7 @@ fn test_use_advanced_auth() {
 
     //    std::println!("{:?}", sig);
 
-    let sig_obj = match sig {
-        Signature::Ed25519(obj) => obj,
-        _ => panic!("not ed25519"),
-    };
-
-    client.test_sig(&sig_obj, &bytes!(&e, 0x7), &bytes!(&e, 0x7));
+    client.test_sig(&sig, &bytes!(&e, 0x7), &bytes!(&e, 0x7));
 }
 
 ```
@@ -251,25 +245,34 @@ Then according to the structure of the `Ed25519Signature` (`Ed25519Signature { p
 ```json
 {
   "object": {
-    "map": [
+    "vec": [
       {
-        "key": {
-          "symbol": "public_key"
-        },
-        "val": {
-          "object": {
-            "bytes": "3db6c121f4ae71d5c8db6efe199b57581e2973bfa3cc2b4a55f1c1b35fcb68ea"
-          }
-        }
+        "symbol": "Ed25519"
       },
       {
-        "key": {
-          "symbol": "signature"
-        },
-        "val": {
-          "object": {
-            "bytes": "50f37d6dabe59021ed89433391e21bdc6c732169a4fca40a8abdd89e24b881bc568a2edb6722b92a61e9eeb8e773b6c1d308a4dec41b1effc8ecb3d3fa6b7b0a"
-          }
+        "object": {
+          "map": [
+            {
+              "key": {
+                "symbol": "public_key"
+              },
+              "val": {
+                "object": {
+                  "bytes": "3db6c121f4ae71d5c8db6efe199b57581e2973bfa3cc2b4a55f1c1b35fcb68ea"
+                }
+              }
+            },
+            {
+              "key": {
+                "symbol": "signature"
+              },
+              "val": {
+                "object": {
+                  "bytes": "50f37d6dabe59021ed89433391e21bdc6c732169a4fca40a8abdd89e24b881bc568a2edb6722b92a61e9eeb8e773b6c1d308a4dec41b1effc8ecb3d3fa6b7b0a"
+                }
+              }
+            }
+          ]
         }
       }
     ]
@@ -285,7 +288,7 @@ soroban invoke \
   --secret-key SECRET \
   --rpc-url http://INSTANCE_HOST:8000/soroban/rpc \
   --network-passphrase 'Standalone Network ; February 2017' \
-  --fn test_sig --arg '{"object":{"map":[{"key":{"symbol":"public_key"},"val":{"object":{"bytes":"3db6c121f4ae71d5c8db6efe199b57581e2973bfa3cc2b4a55f1c1b35fcb68ea"}}},{"key":{"symbol":"signature"},"val":{"object":{"bytes":"50f37d6dabe59021ed89433391e21bdc6c732169a4fca40a8abdd89e24b881bc568a2edb6722b92a61e9eeb8e773b6c1d308a4dec41b1effc8ecb3d3fa6b7b0a"}}}]}}' --arg "68656c6c6f" --arg "68656c6c6f"
+  --fn test_sig --arg '{"object":{"vec":[{"symbol":"Ed25519"},{"object":{"map":[{"key":{"symbol":"public_key"},"val":{"object":{"bytes":"3db6c121f4ae71d5c8db6efe199b57581e2973bfa3cc2b4a55f1c1b35fcb68ea"}}},{"key":{"symbol":"signature"},"val":{"object":{"bytes":"50f37d6dabe59021ed89433391e21bdc6c732169a4fca40a8abdd89e24b881bc568a2edb6722b92a61e9eeb8e773b6c1d308a4dec41b1effc8ecb3d3fa6b7b0a"}}}]}}]}}' --arg "68656c6c6f" --arg "68656c6c6f"
 
 output:
 success
